@@ -37,7 +37,10 @@ class ClosestDetector:
             )
 
             # Limit the angle to -pi < theta < pi
-            kv = (range != 0.0) * self._gain_adj(range)
+            if (range == 0.0):
+                kv = 0.0
+            else:
+                kv = self._gain_adj(range)
 
             if np.isposinf(range):
                 print("No object detected")
@@ -75,8 +78,8 @@ class ClosestDetector:
         idx = msg.ranges.index(min(msg.ranges))
         self.closest_angle = msg.angle_min + idx * msg.angle_increment
 
-        print("Closest object distance: " + self.closest_range)
-        print("Closest object direction: " + self.closest_angle)
+        print("Closest object distance: " + str(self.closest_range))
+        print("Closest object direction: " + str(self.closest_angle))
 
     def cleanup(self):
         """

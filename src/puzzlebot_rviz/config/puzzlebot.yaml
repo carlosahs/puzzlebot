@@ -1,0 +1,26 @@
+topics: {
+  cmd_vel: cmd_vel_output,
+  left_torque: left_torque,
+  right_torque: right_torque,
+  left_eta: left_eta,
+  right_eta: right_eta
+}
+
+parameters: {
+# Robot Paremetres
+  M:  0.64,      # Mass of the Robot without wheels and dc motors
+  mw: 0.13,     # Mass of a wheel with motor
+  L:  0.191,    # Distance between robot wheels
+  d:  0.0,      # Distance between centres of mass and rotation
+  Rr: 0.05,     # right wheel radius
+  Rl: 0.05,     # left wheel radius
+# Moment of Inertia
+  I0: 0.0015,    
+  Im: 0.000351,
+  Iw: 0.00008125,
+# Frictcions (static and viscous for each wheel)
+  Cs_r: 0.05,
+  Cs_l: 0.05,
+  Cv_r: 0.0002,
+  Cv_l: 0.0002
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+    <rosparam file="$(find puzzlebot_examples)/config/square_real_robot.yaml" command="load" ns="/distance_controller/"/>
+
+    <node pkg="puzzlebot_examples" name="square" type="square" args=""/>
+</launch>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  <master auto="start"/>
+  <rosparam file="$(find puzzlebot_rviz)/config/puzzlebot_sim.yaml" command="load" ns="puzzlebot_sim"/>	
+  <arg name="puzzlebots" default="1"/>
+  <arg name="motors_per_puzzlebot" default="2"/>
+  <arg name="first" default="1"/>
+
+  <param name="/puzzlebot_sim/puzzlebots" value="$(eval arg('puzzlebots'))" if="$(eval arg('first')>0)"/>
+  <param name="/puzzlebot_sim/puzzlebot/motors_per_puzzlebot" value="$(eval arg('motors_per_puzzlebot'))"/>
+
+  <include file="$(find puzzlebot_rviz)/launch/puzzlebot.launch">
+    <arg name="puzzlebot_id" value="$(eval arg('puzzlebots'))"/>
+    <arg name="motors_per_puzzlebot" value="$(eval arg('motors_per_puzzlebot'))"/>
+  </include>
+
+  <group>
+    <node pkg="puzzlebot_rviz" type="puzzlebot_sim" name="$(eval 'puzzlebot_sim' + str(arg('puzzlebots')))" output="screen" args="$(eval arg('puzzlebots'))"/>
+  </group>
+
+  <include file="$(find puzzlebot_rviz)/launch/puzzlebot_sim.launch" if="$(eval arg('puzzlebots') - 1 > 0)">
+    <arg name="puzzlebots" value="$(eval arg('puzzlebots') - 1)"/>
+    <arg name="first" value="$(eval arg('first') - 1)"/>
+  </include>
+</launch>

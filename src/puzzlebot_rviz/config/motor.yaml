@@ -1,0 +1,22 @@
+
+topics: { 
+  torque:   torque,
+  pwm:      pwm,
+  eta:      eta
+}
+parameters: {
+# Motor Constants
+  KT:     0.0014,
+  Ke:     0.014,
+  Ra:     2.5,
+  La:     0.01,
+# Reduction Gearbox Parameters
+  tr:     34,
+  miu:    1,
+  tau_fr: 0,
+#Inital values of current and rotational velocity
+  eta:    0,
+  I:      0,
+#Supply Voltage
+  Vs: 6
+}

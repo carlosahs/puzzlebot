@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+    <rosparam file="$(find puzzlebot_examples)/config/square_rviz.yaml" command="load" ns="/distance_controller/"/>
+
+    <include file="$(find puzzlebot_rviz)/launch/puzzlebot_rviz.launch"/>
+
+    <node pkg="puzzlebot_examples" name="square" type="square" args=""/>
+</launch>

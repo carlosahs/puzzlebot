@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+    <rosparam file="$(find puzzlebot_rviz)/config/puzzlebot.yaml" command="load" ns="puzzlebot_sim/puzzlebot"/>
+    <arg name="puzzlebot_id" default="1"/>
+    <arg name="motors_per_puzzlebot" default="2"/>
+
+    <include file="$(find puzzlebot_rviz)/launch/motor.launch">
+        <arg name="motor_count" value="$(eval arg('motors_per_puzzlebot'))"/>
+        <arg name="puzzlebot_id" value="$(eval arg('puzzlebot_id'))"/>
+    </include>
+    
+    <arg name="name" value = "$(eval 'puzzlebot_sim' + str(arg('puzzlebot_id')) + '_puzzlebot')"/>
+    <arg name="prefix" value = "$(eval 'puzzlebot_sim' + str(arg('puzzlebot_id')) + '/puzzlebot/')"/>
+    
+    <node pkg="puzzlebot_rviz" type="puzzlebot" name="$(eval arg('name'))" output="screen" args="$(eval arg('prefix'))"/>
+</launch>

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+
+    <node pkg="teleop_twist_keyboard" name="teleop_twist_keyboard" type="teleop_twist_keyboard.py" args=""/>
+</launch>

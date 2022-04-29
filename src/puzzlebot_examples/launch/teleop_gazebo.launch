@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+    <rosparam file="$(find puzzlebot_examples)/config/square_gazebo.yaml" command="load" ns="/distance_controller/"/>
+
+    <include file="$(find puzzlebot_gazebo)/launch/puzzlebot_gazebo.launch"/>
+
+    <node pkg="teleop_twist_keyboard" name="teleop_twist_keyboard" type="teleop_twist_keyboard.py" args=""/>
+</launch>

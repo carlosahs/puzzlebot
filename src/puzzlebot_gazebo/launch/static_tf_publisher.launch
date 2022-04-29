@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <include file="$(find puzzlebot_gazebo)/launch/puzzlebot_gazebo.launch"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="lidar" args="0 0 0.1 3.141593 0 0 base_link lidar"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="carrot" args="0.1 0.1 0.05 0 0 1.570796 camera carrot"/>
+</launch>

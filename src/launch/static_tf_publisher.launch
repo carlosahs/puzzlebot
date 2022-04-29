@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <include file="$(find puzzlebot_gazebo)/launch/puzzlebot_gazebo.launch"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="carrot2_broadcaster" args="1 1 1 0 0 0 base_link carrot2"/>
+</launch>

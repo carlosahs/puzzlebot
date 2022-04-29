@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <master auto="start"/>
+    <rosparam file="$(find puzzlebot_examples)/config/square_rviz.yaml" command="load" ns="/distance_controller/"/>
+
+    <include file="$(find puzzlebot_rviz)/launch/puzzlebot_rviz.launch"/>
+
+    <node pkg="teleop_twist_keyboard" name="teleop_twist_keyboard" type="teleop_twist_keyboard.py" args="">
+        <remap from="/cmd_vel" to="/puzzlebot_sim1/cmd_vel"/>
+    </node>
+</launch>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <include file="$(find puzzlebot_gazebo)/launch/puzzlebot_gazebo.launch"/>
+    <node pkg="twist_practice" name="aaron_robot_control" type="aaron_robot_control.py" output="screen">
+        <param name="frame_id" value="base_link" />
+    </node>
+</launch>

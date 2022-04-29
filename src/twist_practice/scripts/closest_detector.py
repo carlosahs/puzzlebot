@@ -37,7 +37,7 @@ class ClosestDetector:
             )
 
             # Limit the angle to -pi < theta < pi
-            kv = (range != 0) * self._gain_adj()
+            kv = (range != 0.0 and self.closest_range > 0.0) * self._gain_adj()
 
             if np.isposinf(range):
                 print("No object detected")

@@ -37,7 +37,7 @@ class ClosestDetector:
             )
 
             # Limit the angle to -pi < theta < pi
-            kv = (range != 0.0 and self.closest_range > 0.0) * self._gain_adj()
+            kv = (range != 0.0) * self._gain_adj(range)
 
             if np.isposinf(range):
                 print("No object detected")
@@ -58,13 +58,13 @@ class ClosestDetector:
 
             r.sleep()
 
-    def _gain_adj(self):
+    def _gain_adj(self, range):
         """
         Adjust gain K considering it as a function of the error
         """
         return self.KMAX * (
-            (1.0 - math.exp(-self.ALPHA * abs(self.closest_range) ** 2))
-            / abs(self.closest_range)
+            (1.0 - math.exp(-self.ALPHA * abs(range) ** 2))
+            / abs(range)
         )
 
     def laser_cb(self, msg):

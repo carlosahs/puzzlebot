@@ -9,6 +9,8 @@ from geometry_msgs.msg import Twist
 class ClosestDetector:
     KMAX = 0.9
     ALPHA = 1.0
+    STOP_RANGE = 0.1
+    KW = 1.0  # Angular velocity gain
 
     def __init__(self):
         rospy.on_shutdown(self.cleanup)
@@ -18,7 +20,7 @@ class ClosestDetector:
         vel_msg = Twist()
 
         # kv = 0.6 # Constant to change the linear speed
-        kw = 1.0  # Angular velocity gain
+        # kw = 1.0  # Angular velocity gain
 
         self.closest_range = 0.0  # Distance to the closest object
         self.closest_angle = 0.0  # Angle to the closest object
@@ -42,12 +44,12 @@ class ClosestDetector:
                 vel_msg.linear.x = 0.0
                 vel_msg.angular.z = 0.0
             else:
-                if range <= 0.5:
+                if range <= self.STOP_RANGE:
                     vel_msg.linear.x = 0.0
-                    vel_msg.angular.z = kw * theta
+                    vel_msg.angular.z = self.KW * theta
                 else:
                     vel_msg.linear.x = kv * range
-                    vel_msg.angular.z = kw * theta
+                    vel_msg.angular.z = self.KW * theta
 
             self.cmd_vel_pub.publish(vel_msg)
 

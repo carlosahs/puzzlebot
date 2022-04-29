@@ -9,7 +9,7 @@ from geometry_msgs.msg import Twist
 class ClosestDetector:
     KMAX = 0.9
     ALPHA = 1.0
-    STOP_RANGE = 0.1
+    STOP_RANGE = 0.5
     KW = 1.0  # Angular velocity gain
 
     def __init__(self):
@@ -17,6 +17,7 @@ class ClosestDetector:
         # Subscribers
         rospy.Subscriber("base_scan", LaserScan, self.laser_cb)
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+
         vel_msg = Twist()
 
         # kv = 0.6 # Constant to change the linear speed
@@ -26,8 +27,8 @@ class ClosestDetector:
         self.closest_angle = 0.0  # Angle to the closest object
 
         # Init node
-        r = rospy.Rate(10)  # 10Hz is the lidar's frequency
-        print("Node initialized 10hz")
+        r = rospy.Rate(1)  # 10Hz is the lidar's frequency
+        print("Node initialized 1hz")
 
         while not rospy.is_shutdown():
             range = self.closest_range
@@ -37,7 +38,7 @@ class ClosestDetector:
             )
 
             # Limit the angle to -pi < theta < pi
-            if (range == 0.0):
+            if (range <= self.STOP_RANGE):
                 kv = 0.0
             else:
                 kv = self._gain_adj(range)
@@ -47,12 +48,8 @@ class ClosestDetector:
                 vel_msg.linear.x = 0.0
                 vel_msg.angular.z = 0.0
             else:
-                if range <= self.STOP_RANGE:
-                    vel_msg.linear.x = 0.0
-                    vel_msg.angular.z = self.KW * theta
-                else:
-                    vel_msg.linear.x = kv * range
-                    vel_msg.angular.z = self.KW * theta
+                vel_msg.linear.x = kv * range
+                vel_msg.angular.z = self.KW * theta
 
             self.cmd_vel_pub.publish(vel_msg)
 
@@ -75,7 +72,8 @@ class ClosestDetector:
         This function receives a number
         For this lidar
         """
-        idx = msg.ranges.index(min(msg.ranges))
+        self.closest_range = min(msg.ranges)
+        idx = msg.ranges.index(self.closest_range)
         self.closest_angle = msg.angle_min + idx * msg.angle_increment
 
         print("Closest object distance: " + str(self.closest_range))

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import rospy
+import math
 
 from std_msgs.msg import Int32
 from geometry_msgs.msg import Point
@@ -13,8 +14,11 @@ class ColorFollower:
     """
 
     XM = 300
-    KV = 1.0  # 0.5
+    KV = 3.0  # 0.5
     KW = 0.001796875  # 0.00359375
+
+    MAX_RADIUS = 250
+    W_MIN_VEL = math.pi / 8
 
     def __init__(self):
         rospy.on_shutdown(self._cleanup)
@@ -31,19 +35,26 @@ class ColorFollower:
 
         r = rospy.Rate(1)
 
-        d_threshold = 5.5
-        w_threshold = 5.5
+        d_threshold = 4.5
+        w_threshold = 6.5
 
         while not rospy.is_shutdown():
             # >>> SOLUTION
             x_err = self.XM - self.ball_center.x
             w_err = self.XM - self.ball_radius
 
-            if abs(x_err) >= d_threshold:
-                self.vel.angular.z = self.KW * x_err
-            elif abs(w_err) >= w_threshold and self.ball_radius > 0:
+            if self.ball_radius > 0 and self.ball_radius < self.MAX_RADIUS:
+                if abs(x_err) >= d_threshold:
+                    self.vel.angular.z = self.KW * x_err
+                elif abs(w_err) >= w_threshold:
+                    self.vel.angular.z = 0.0
+                    self.vel.linear.x = self.KV * 1 / self.ball_radius
+            elif self.ball_radius >= self.MAX_RADIUS:
                 self.vel.angular.z = 0.0
-                self.vel.linear.x = self.KV * 1 / self.ball_radius
+                self.vel.linear.x = 0.0
+            elif self.ball_radius == 0:
+                self.vel.angular.z = self.W_MIN_VEL
+                self.vel.linear.x = 0.0
             # <<< SOLUTION
 
             # print(self.ball_radius)

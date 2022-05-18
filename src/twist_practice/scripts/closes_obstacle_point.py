@@ -9,10 +9,10 @@ from geometry_msgs.msg import Twist
 
 class AvoidObstacleClass:
     def __init__(self):
-        rospy.on_shutdown(self.cleanup)
+        rospy.on_shutdown(self._cleanup)
 
         # PUBLISEHRS AND SUBSCRIBERS
-        rospy.Subscriber("base_scan", LaserScan, self.laser_cb)
+        rospy.Subscriber("base_scan", LaserScan, self._laser_cb)
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
 
         # CONSTANTS AND VARIABLES
@@ -27,6 +27,11 @@ class AvoidObstacleClass:
         r = rospy.Rate(10)  # 10Hz is the lidar's frequency
 
         print("Node initialized 1hz")
+
+        # LiDAR info
+        self.lidar_ranges = []
+        self.x_from_lidar = []
+        self.y_from_lidar = []
 
         # MAIN LOOP
         while not rospy.is_shutdown():
@@ -53,14 +58,16 @@ class AvoidObstacleClass:
 
             r.sleep()
 
-    def laser_cb(self, msg):
+    def _laser_cb(self, msg):
         """
         This function receives a message of type LaserScan and computes the
         closest object direction and range
         """
-        closest_range = min(msg.ranges)
+        self.lidar_ranges = msg.ranges
+
+        closest_range = self.lidar_ranges.range_min  # min(msg.ranges)
         idx = msg.ranges.index(closest_range)
-        closest_angle = msg.angle_min + idx * msg.angle_increment
+        closest_angle = self.lidar_ranges.angle_min + idx * self.lidar_ranges.angle_increment
 
         # Limit the angle to [-pi,pi]
         closest_angle = np.arctan2(np.sin(closest_angle), np.cos(closest_angle))
@@ -68,7 +75,7 @@ class AvoidObstacleClass:
         self.closest_range = closest_range
         self.closest_angle = closest_angle
 
-    def cleanup(self):
+    def _cleanup(self):
         """
         This function is called just before finishing the node
         You can use it to clean things up before leaving

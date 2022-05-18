@@ -16,6 +16,7 @@ class AvoidObstacleClass:
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
 
         # CONSTANTS AND VARIABLES
+        MIN_OBSTACLE_RANGE = 1.5  # robot's circumscribed radius
         v_desired = 0.4  # speed when there are no obstacles
         kw = 1 / 3  # angular speed gain
 
@@ -35,8 +36,15 @@ class AvoidObstacleClass:
             thetaA0 = theta_closest - np.pi
             thetaA0 = np.arctan2(np.sin(thetaA0), np.cos(thetaA0))
 
-            vel_msg.lineal.x = v_desired
-            vel_msg.angular.z = kw * thetaA0
+            if np.isposinf(range):  # no obstacles condition
+                vel_msg.lineal.x = v_desired
+                vel_msg.angular.z = 0.0
+            elif range <= MIN_OBSTACLE_RANGE:
+                vel_msg.lineal.x = 0.0
+                vel_msg.angular.z = 0.0
+            else:
+                vel_msg.lineal.x = v_desired
+                vel_msg.angular.z = kw * thetaA0
 
             print("closest object distance: " + str(self.closest_range))
             print("theta_closest: " + str(theta_closest))

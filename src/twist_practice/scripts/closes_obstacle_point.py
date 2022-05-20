@@ -30,6 +30,7 @@ class AvoidObstacleClass:
 
         # LiDAR info
         self.lidar_msg = None
+
         self.x_from_lidar = None
         self.y_from_lidar = None
 
@@ -54,18 +55,68 @@ class AvoidObstacleClass:
             print("closest object distance: " + str(self.closest_range))
             print("theta_closest: " + str(theta_closest))
 
-            # Print x and y points
+            # Activity 1: Print corresponding x and y point from angle and distance
+            x, y = self._xy_from_tr(theta_closest, self.closest_range)
+
+            print("x from closest: " + x)
+            print("y from closest: " + y)
+
+            # Activity 2: Print x and y points
+            self._lidar_to_xy()
+
             if self.x_from_lidar is not None:
-                print("x points: " + self.x_from_lidar)
+                print("x points: ")
+                print(self.x_from_lidar)
             if self.y_from_lidar is not None:
-                print("y points: " + self.y_from_lidar)
+                print("y points: ")
+                print(self.y_from_lidar)
+
+            # Activity 2: Get Xt and Yt
+            Xt, Yt = self._get_Xt_Yt()
+
+            print(f"Xt: {Xt}")
+            print(f"Yt: {Yt}")
+
+            # Activity 2: theta T and distance T
+            thetaT, distanceT = self._get_thetaT_distanceT()
+
+            print(f"Theta T: {thetaT}")
+            print(f"Distance T: {distanceT}")
+
+            # Activity 3: Robot's angular and linear velocities
+            v = v_desired * distanceT
+            w = kw * thetaT
 
             self.cmd_vel_pub.publish(vel_msg)
 
             r.sleep()
 
-    def _lidar_to_vector(self):
-        if len(self.lidar_msg) is None:  # no LiDAR object instantiated
+    def _xy_from_tr(self, angle, distance):
+        """
+        Compute x and y from angle and distance
+        """
+        return distance * np.cos(angle), distance * np.sin(angle)
+
+    def _get_Xt_Yt(self):
+        """
+        Compute xt and yt
+        """
+        xt = sum(self.x_from_lidar)
+        yt = sum(self.y_from_lidar)
+
+        return xt, yt
+
+    def _get_thetaT_distanceT(self, xt, yt):
+        """
+        Compute theta t and distance try:
+        """
+        tt = np.arctan2(yt, xt)
+        dt = np.sqrt(xt ** 2 + yt ** 2)
+
+        return tt, dt
+
+    def _lidar_to_xy(self):
+        if self.lidar_msg is None:  # no LiDAR object instantiated
             return
 
         angle_increment = self.lidar_msg.angle_increment
@@ -82,10 +133,10 @@ class AvoidObstacleClass:
         This function receives a message of type LaserScan and computes the
         closest object direction and range
         """
-        self.lidar_msg = msg.ranges
+        self.lidar_msg = msg
 
-        closest_range = self.lidar_msg.range_min  # min(msg.ranges)
-        idx = msg.ranges.index(closest_range)
+        closest_range = min(self.lidar_msg.ranges)
+        idx = self.lidar_msg.ranges.index(closest_range)
         closest_angle = self.lidar_msg.angle_min + idx * self.lidar_msg.angle_increment
 
         # Limit the angle to [-pi,pi]

@@ -29,9 +29,9 @@ class AvoidObstacleClass:
         print("Node initialized 1hz")
 
         # LiDAR info
-        self.lidar_ranges = []
-        self.x_from_lidar = []
-        self.y_from_lidar = []
+        self.lidar_msg = None
+        self.x_from_lidar = None
+        self.y_from_lidar = None
 
         # MAIN LOOP
         while not rospy.is_shutdown():
@@ -42,32 +42,51 @@ class AvoidObstacleClass:
             thetaA0 = np.arctan2(np.sin(thetaA0), np.cos(thetaA0))
 
             if np.isposinf(range):  # no obstacles condition
-                vel_msg.lineal.x = v_desired
+                vel_msg.linear.x = v_desired
                 vel_msg.angular.z = 0.0
             elif range <= MIN_OBSTACLE_RANGE:
-                vel_msg.lineal.x = 0.0
+                vel_msg.linear.x = 0.0
                 vel_msg.angular.z = 0.0
             else:
-                vel_msg.lineal.x = v_desired
+                vel_msg.linear.x = v_desired
                 vel_msg.angular.z = kw * thetaA0
 
             print("closest object distance: " + str(self.closest_range))
             print("theta_closest: " + str(theta_closest))
 
+            # Print x and y points
+            if self.x_from_lidar is not None:
+                print("x points: " + self.x_from_lidar)
+            if self.y_from_lidar is not None:
+                print("y points: " + self.y_from_lidar)
+
             self.cmd_vel_pub.publish(vel_msg)
 
             r.sleep()
+
+    def _lidar_to_vector(self):
+        if len(self.lidar_msg) is None:  # no LiDAR object instantiated
+            return
+
+        angle_increment = self.lidar_msg.angle_increment
+        angle_min = self.lidar_msg.angle_min
+
+        distance = [range for range in self.lidar_msg.ranges]
+        angle = [angle_min + i * angle_increment for i in range(len(distance))]
+
+        self.x_from_lidar = [r * np.cos(t) for r, t in zip(distance, angle)]
+        self.y_from_lidar = [r * np.sin(t) for r, t in zip(distance, angle)]
 
     def _laser_cb(self, msg):
         """
         This function receives a message of type LaserScan and computes the
         closest object direction and range
         """
-        self.lidar_ranges = msg.ranges
+        self.lidar_msg = msg.ranges
 
-        closest_range = self.lidar_ranges.range_min  # min(msg.ranges)
+        closest_range = self.lidar_msg.range_min  # min(msg.ranges)
         idx = msg.ranges.index(closest_range)
-        closest_angle = self.lidar_ranges.angle_min + idx * self.lidar_ranges.angle_increment
+        closest_angle = self.lidar_msg.angle_min + idx * self.lidar_msg.angle_increment
 
         # Limit the angle to [-pi,pi]
         closest_angle = np.arctan2(np.sin(closest_angle), np.cos(closest_angle))

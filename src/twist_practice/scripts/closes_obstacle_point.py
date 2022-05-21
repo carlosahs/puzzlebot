@@ -55,37 +55,38 @@ class AvoidObstacleClass:
             print("closest object distance: " + str(self.closest_range))
             print("theta_closest: " + str(theta_closest))
 
+            self._lidar_to_xy()
+
             # Activity 1: Print corresponding x and y point from angle and distance
             x, y = self._xy_from_tr(theta_closest, self.closest_range)
 
-            print("x from closest: " + x)
-            print("y from closest: " + y)
+            print(f"x from closest: {x}")
+            print(f"y from closest: {y}")
 
-            # Activity 2: Print x and y points
-            self._lidar_to_xy()
-
-            if self.x_from_lidar is not None:
+            # Activity 2
+            if self.x_from_lidar is not None and self.y_from_lidar is not None:
+                # Print x and y points
                 print("x points: ")
                 print(self.x_from_lidar)
-            if self.y_from_lidar is not None:
+
                 print("y points: ")
                 print(self.y_from_lidar)
 
-            # Activity 2: Get Xt and Yt
-            Xt, Yt = self._get_Xt_Yt()
+                # Get Xt and Yt
+                Xt, Yt = self._get_Xt_Yt()
 
-            print(f"Xt: {Xt}")
-            print(f"Yt: {Yt}")
+                print(f"Xt: {Xt}")
+                print(f"Yt: {Yt}")
 
-            # Activity 2: theta T and distance T
-            thetaT, distanceT = self._get_thetaT_distanceT()
+                # Theta T and distance T
+                thetaT, distanceT = self._get_thetaT_distanceT(Xt, Yt)
 
-            print(f"Theta T: {thetaT}")
-            print(f"Distance T: {distanceT}")
+                print(f"Theta T: {thetaT}")
+                print(f"Distance T: {distanceT}")
 
-            # Activity 3: Robot's angular and linear velocities
-            v = v_desired * distanceT
-            w = kw * thetaT
+            # # Activity 3: Robot's angular and linear velocities
+            # v = v_desired * distanceT
+            # w = kw * thetaT
 
             self.cmd_vel_pub.publish(vel_msg)
 
@@ -101,8 +102,8 @@ class AvoidObstacleClass:
         """
         Compute xt and yt
         """
-        xt = sum(self.x_from_lidar)
-        yt = sum(self.y_from_lidar)
+        xt = np.clip(self.x_from_lidar, -8.0, 8.0).sum()
+        yt = np.clip(self.y_from_lidar, -8.0, 8.0).sum()
 
         return xt, yt
 

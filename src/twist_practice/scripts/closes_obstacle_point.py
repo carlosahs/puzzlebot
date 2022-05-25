@@ -57,37 +57,6 @@ class AvoidObstacleClass:
 
             self._lidar_to_xy()
 
-            # Activity 1: Print corresponding x and y point from angle and distance
-            x, y = self._xy_from_tr(theta_closest, self.closest_range)
-
-            print(f"x from closest: {x}")
-            print(f"y from closest: {y}")
-
-            # Activity 2
-            if self.x_from_lidar is not None and self.y_from_lidar is not None:
-                # Print x and y points
-                print("x points: ")
-                print(self.x_from_lidar)
-
-                print("y points: ")
-                print(self.y_from_lidar)
-
-                # Get Xt and Yt
-                Xt, Yt = self._get_Xt_Yt()
-
-                print(f"Xt: {Xt}")
-                print(f"Yt: {Yt}")
-
-                # Theta T and distance T
-                thetaT, distanceT = self._get_thetaT_distanceT(Xt, Yt)
-
-                print(f"Theta T: {thetaT}")
-                print(f"Distance T: {distanceT}")
-
-            # # Activity 3: Robot's angular and linear velocities
-            # v = v_desired * distanceT
-            # w = kw * thetaT
-
             self.cmd_vel_pub.publish(vel_msg)
 
             r.sleep()

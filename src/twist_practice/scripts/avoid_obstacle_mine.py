@@ -86,11 +86,31 @@ class LiDAR:
             yield (x, y)
 
 
-class AvoidObstacle:
-    MIN_OBSTACLE_RANGE = 0.3  # robot's circumscribed radius
-    V_DESIRED = 0.00008  # speed when there are no obstacles
-    KW = 0.3  # angular speed gain
+class Robot:
+    def __init__(self):
+        self.kw = 0.0
+        self.kv = 0.0
 
+        self.vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+        self.vel = Twist()
+
+    def pub_vel(self):
+        self.vel_pub.publish(self.vel)
+
+    def set_linear_vel(self, vel):
+        self.vel.linear.x = vel
+
+    def set_angular_vel(self, vel):
+        self.vel.angular.z = vel
+
+    def cleanup(self):
+        self.vel.linear.x = 0.0
+        self.vel.angular.z = 0.0
+
+        self.pub_vel(self.vel)
+
+
+class AvoidObstacle:
     def __init__(self):
         rospy.on_shutdown(self._cleanup)
 

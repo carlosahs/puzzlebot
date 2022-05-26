@@ -97,10 +97,10 @@ class LineFollower:
             if lines == 3:
                 err = cx - w / 2
 
-                vw_control = numpy.sign(direction) * err / 100
+                wv_control = numpy.sign(direction) * err / 100
 
                 self.twist.linear.x = lv
-                self.twist.angular.z = vw_control
+                self.twist.angular.z = wv_control
             elif direction > 0:
                 self.twist.linear.x = 0.0
                 self.twist.angular.z = wv

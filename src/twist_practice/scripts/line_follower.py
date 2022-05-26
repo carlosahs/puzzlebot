@@ -76,7 +76,7 @@ class LineFollower:
             zeros_tail = 0
             zeros_head = 0
 
-            for v in half:
+            for lv in half:
                 # if v == 0 and start is True:
                 #    zeros += 1
                 # else:
@@ -85,31 +85,28 @@ class LineFollower:
                 zeros_tail += lines == 0
                 zeros_head += lines == 3
 
-                if v != v_actual:
-                    lines += v
-                    v_actual = v
+                if lv != v_actual:
+                    lines += lv
+                    v_actual = lv
 
-            v = 0.2
-            w = 0.2
+            lv = 0.2
+            wv = 0.2
 
             direction = zeros_tail - zeros_head
 
             if lines == 3:
                 err = cx - w / 2
 
-                w_control = numpy.sign(direction) * err / 100
+                vw_control = numpy.sign(direction) * err / 100
 
-                self.twist.linear.x = v
-                self.twist.angular.z = w_control
-
+                self.twist.linear.x = lv
+                self.twist.angular.z = vw_control
             elif direction > 0:
                 self.twist.linear.x = 0.0
-                self.twist.angular.z = w
-
-            elif diraction < 0:
+                self.twist.angular.z = wv
+            elif direction < 0:
                 self.twist.linear.x = 0.0
-                self.twist.angular.z = -w
-
+                self.twist.angular.z = -wv
             else:
                 self.twist.linear.x = 0.0
                 self.twist.angular.z = 0.0

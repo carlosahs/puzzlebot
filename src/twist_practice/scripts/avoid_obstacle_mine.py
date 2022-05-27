@@ -126,8 +126,8 @@ class Robot:
         y = y - self.y
 
         self.w = (
-            r * (self.wr - self.wl) / self.WHEEL_SEPARATION
-            * dt * self.w
+            self.WHEEL_RADIUS * (self.wr - self.wl)
+            / self.WHEEL_SEPARATION * dt * self.w
         )
 
         # Limit angle range to [-pi, pi]
@@ -135,11 +135,11 @@ class Robot:
 
         self.x = (
             self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * math.cos(self.w)
+            / 2 * dt * np.cos(self.w)
         )
         self.y = (
             self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * math.sin(self.w)
+            / 2 * dt * np.sin(self.w)
         )
 
         w_err = np.arctan2(y, x) - self.w
@@ -212,15 +212,17 @@ class Main:
             self.min_range = np.inf
 
     def start(self):
-        rate = rospy.Rate(10)
+        freq = 10.0
+        rate = rospy.Rate(freq)
 
         while not rospy.is_shutdown():
-            if self.lidar.available():
-                if np.isinf(self.lidar.get_min_range()):
-                    self.robot.set_linear_vel(0.0)
-                    self.robot.set_angular_vel(0.0)
-                else:
-                    self.control_speed()
+            self.robot.goto_point(1.0, 1.0, 0.0, 1.0 / freq)
+            # if self.lidar.available():
+            #     if np.isinf(self.lidar.get_min_range()):
+            #         self.robot.set_linear_vel(0.0)
+            #         self.robot.set_angular_vel(0.0)
+            #     else:
+            #         self.control_speed()
 
             self.robot.pub_vel()
             rate.sleep()

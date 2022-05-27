@@ -16,7 +16,7 @@ class LiDAR:
     #     pass
 
     def available(self):
-        return self.lidar_msg is None
+        return self.lidar_msg is not None
 
     def get_x_y(self, r, angle):
         return self._polar_to_cartesian(r, angle)

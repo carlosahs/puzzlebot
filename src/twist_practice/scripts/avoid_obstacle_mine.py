@@ -149,8 +149,8 @@ class Main:
             1 - np.exp(-self.GROWTH_RATE * dT ** 2)
         ) / dT
         
-        self.lidar.set_linear_vel(kv * dT)
-        self.lidar.set_angular_vel(self.KW * thetaT)
+        self.robot.set_linear_vel(kv * dT)
+        self.robot.set_angular_vel(self.KW * thetaT)
 
     def cleanup(self):
         self.lidar.cleanup()

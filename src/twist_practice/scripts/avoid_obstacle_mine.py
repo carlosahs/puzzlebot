@@ -12,8 +12,8 @@ class LiDAR:
         rospy.Subscriber("base_scan", LaserScan, self._callback)
         self.lidar_msg = None
 
-    def start(self):
-        pass
+    # def start(self):
+    #     pass
 
     def available(self):
         return self.lidar_msg is None
@@ -88,9 +88,6 @@ class LiDAR:
 
 class Robot:
     def __init__(self):
-        self.kw = 0.0
-        self.kv = 0.0
-
         self.vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         self.vel = Twist()
 
@@ -108,6 +105,27 @@ class Robot:
         self.vel.angular.z = 0.0
 
         self.pub_vel(self.vel)
+
+
+class Main:
+    def __init__(self):
+        self.lidar = LiDAR()
+        self.robot = Robot()
+
+        rospy.on_shutdown(self.cleanup)
+
+        if self.lidar.available():
+            self.min_angle = self.lidar.get_min_angle()
+            self.min_range = self.lidar.get_min_range()
+        else:
+            self.min_angle = 0.0
+            self.min_range = np.inf
+
+        rate = rospy.Rate(10)
+
+    def cleanup(self):
+        self.lidar.cleanup()
+        self.robot.cleanup()
 
 
 class AvoidObstacle:

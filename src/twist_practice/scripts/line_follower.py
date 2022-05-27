@@ -68,26 +68,19 @@ class LineFollower:
             entre mayor sea el error, mayor será su velocidad angular.
             """
 
-            lines = 0
-            v_actual = half[0]
-            # zeros = 0
-            # start = True
-
             zeros_tail = 0
             zeros_head = 0
+            lines = 0
 
-            for lv in half:
-                # if v == 0 and start is True:
-                #    zeros += 1
-                # else:
-                #    start = False
+            v_actual = half[0]
 
+            for v in half:
                 zeros_tail += lines == 0
-                zeros_head += lines == 3
+                zeros_head += lines == 3 and v == 0
 
-                if lv != v_actual:
-                    lines += lv
-                    v_actual = lv
+                if v != v_actual:
+                    lines += v
+                    v_actual = v
 
             lv = 0.2
             wv = 0.2

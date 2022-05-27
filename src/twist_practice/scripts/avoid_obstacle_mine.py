@@ -117,20 +117,13 @@ class Robot:
             return
 
         # Control constants
-        KV = 0.3
+        KV = 0.15  # 0.3
         KW = 0.5
         THRESHOLD = 0.1
-
-        w_err = 2 * THRESHOLD
-        d_err = 2 * THRESHOLD
-
-        # print(str(self.x) + " " + str(self.y))
 
         at_point = False
 
         while not at_point:
-            print(str(w_err) + " " + str(d_err))
-
             self.w = (
                 self.WHEEL_RADIUS * (self.wr - self.wl)
                 / self.WHEEL_SEPARATION * dt + self.w
@@ -148,11 +141,8 @@ class Robot:
                 / 2 * dt * np.sin(self.w)
             )
 
-            w_err = np.arctan2(y, x) - self.w
+            w_err = np.arctan2(y - self.y, x - self.x) - self.w
             d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
-
-            self.set_linear_vel(0.0)
-            self.set_angular_vel(0.0)
 
             if abs(w_err) >= THRESHOLD:
                 self.set_linear_vel(0.0)
@@ -166,8 +156,12 @@ class Robot:
 
                 at_point = True
 
+            print(str(w_err) + " " + str(d_err))
+
             self.pub_vel()
             clock.sleep()
+
+        print(str(self.x) + " " + str(self.y))
 
     def get_x(self):
         return self.x

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import time
 import rospy
@@ -9,8 +9,8 @@ from sensor_msgs.msg import LaserScan
 
 class LiDAR:
     def __init__(self):
-        rospy.Subscriber("base_scan", LaserScan, self._callback)
         self.lidar_msg = None
+        rospy.Subscriber("base_scan", LaserScan, self._callback)
 
     # def start(self):
     #     pass
@@ -37,6 +37,9 @@ class LiDAR:
         dT = np.sqrt(xT ** 2 + yT ** 2)
 
         return thetaT, dT
+
+    def get_ranges(self):
+        return self.lidar_msg.ranges
 
     def get_range(self, idx):
         return self.lidar_msg.ranges[idx]
@@ -108,6 +111,10 @@ class Robot:
 
 
 class Main:
+    KW = 0.3  # Angular speed gain
+    KV_MAX = 0.3  # Maximum linear speed gain
+    GROWTH_RATE = 1.0  # Exponential growth rate
+
     def __init__(self):
         self.lidar = LiDAR()
         self.robot = Robot()
@@ -121,7 +128,29 @@ class Main:
             self.min_angle = 0.0
             self.min_range = np.inf
 
+    def start(self):
         rate = rospy.Rate(10)
+
+        while not rospy.is_shutdown():
+            if self.lidar.available():
+                if np.isinf(self.lidar.get_min_range()):
+                    self.robot.set_linear_vel(0.0)
+                    self.robot.set_angular_vel(0.0)
+                else:
+                    self.control_speed()
+
+            self.lidar.pub_vel()
+            rate.sleep()
+
+    def control_speed(self):
+        thetaT, dT = self.lidar.get_thetaT_dT()
+
+        kv = self.KV_MAX * (
+            1 - np.exp(-self.GROWTH_RATE * dT ** 2)
+        ) / dT
+        
+        self.lidar.set_linear_vel(kv * dT)
+        self.lidar.set_angular_vel(self.KW * thetaT)
 
     def cleanup(self):
         self.lidar.cleanup()

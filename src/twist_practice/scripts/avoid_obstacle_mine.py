@@ -111,7 +111,7 @@ class Robot:
         self.wl = None
         self.wr = None
 
-    def goto_point(self, x, y, dt):
+    def goto_point(self, x, y, dt, clock):
         # Do nothing if nodes are not available
         if self.wl is None and self.wr is None:
             return
@@ -121,34 +121,53 @@ class Robot:
         KW = 0.5
         THRESHOLD = 0.1
 
-        self.w = (
-            self.WHEEL_RADIUS * (self.wr - self.wl)
-            / self.WHEEL_SEPARATION * dt + self.w
-        )
+        w_err = 2 * THRESHOLD
+        d_err = 2 * THRESHOLD
 
-        # Limit angle range to [-pi, pi]
-        self.w = np.arctan2(np.sin(self.w), np.cos(self.w))
+        # print(str(self.x) + " " + str(self.y))
 
-        self.x = (
-            self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * np.cos(self.w)
-        )
-        self.y = (
-            self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * np.sin(self.w)
-        )
+        at_point = False
 
-        w_err = np.arctan2(y, x) - self.w
-        d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+        while not at_point:
+            print(str(w_err) + " " + str(d_err))
 
-        self.set_linear_vel(0.0)
-        self.set_angular_vel(0.0)
+            self.w = (
+                self.WHEEL_RADIUS * (self.wr - self.wl)
+                / self.WHEEL_SEPARATION * dt + self.w
+            )
 
-        if abs(w_err) >= THRESHOLD:
-            self.set_angular_vel(KW * w_err)
-        elif abs(d_err) >= THRESHOLD:
-            self.set_linear_vel(KV * d_err)
+            # Limit angle range to [-pi, pi]
+            self.w = np.arctan2(np.sin(self.w), np.cos(self.w))
+
+            self.x = (
+                self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
+                / 2 * dt * np.cos(self.w)
+            )
+            self.y = (
+                self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
+                / 2 * dt * np.sin(self.w)
+            )
+
+            w_err = np.arctan2(y, x) - self.w
+            d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
+            self.set_linear_vel(0.0)
             self.set_angular_vel(0.0)
+
+            if abs(w_err) >= THRESHOLD:
+                self.set_linear_vel(0.0)
+                self.set_angular_vel(KW * w_err)
+            elif abs(d_err) >= THRESHOLD:
+                self.set_linear_vel(KV * d_err)
+                self.set_angular_vel(0.0)
+            else:
+                self.set_linear_vel(0.0)
+                self.set_angular_vel(0.0)
+
+                at_point = True
+
+            self.pub_vel()
+            clock.sleep()
 
     def get_x(self):
         return self.x
@@ -214,16 +233,19 @@ class Main:
         freq = 10.0
         rate = rospy.Rate(freq)
 
+        xt, yt = 0.0, 0.0
+
         while not rospy.is_shutdown():
-            self.robot.goto_point(1.0, 1.0, 1.0 / freq)
+            xt = float(input("x: "))
+            yt = float(input("y: "))
+
+            self.robot.goto_point(xt, yt, 1.0 / freq, rate)
             # if self.lidar.available():
             #     if np.isinf(self.lidar.get_min_range()):
             #         self.robot.set_linear_vel(0.0)
             #         self.robot.set_angular_vel(0.0)
             #     else:
             #         self.control_speed()
-
-            self.robot.pub_vel()
             rate.sleep()
 
     def control_speed(self):

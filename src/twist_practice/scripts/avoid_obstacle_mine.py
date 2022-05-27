@@ -3,6 +3,8 @@
 import time
 import rospy
 import numpy as np
+from std_msgs.msg import Float32
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 
@@ -90,9 +92,78 @@ class LiDAR:
 
 
 class Robot:
+    WHEEL_RADIUS = 0.05  # Wheel radius (m)
+    WHEEL_SEPARATION = 0.19  # Wheel separation (m)
+
     def __init__(self):
+        rospy.Subscriber("wl", Float32, self._wl_callback)
+        rospy.Subscriber("wr", Float32, self._wr_callback)
+
         self.vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+        self.pos_pub = rospy.Publisher("pos", String, queue_size=1)
+
         self.vel = Twist()
+
+        self.x = 0.0
+        self.y = 0.0
+        self.w = 0.0
+
+        self.wl = None
+        self.wr = None
+
+    def goto_point(self, x, y, w, dt):
+        # Do nothing if nodes are not available
+        if self.wl is None and self.wr is None:
+            return
+
+        # Control constants
+        KV = 0.0
+        KW = 0.5
+        THRESHOLD = 0.1
+
+        # Adjust goal coordinates based on origin
+        x = x - self.x
+        y = y - self.y
+
+        self.w = (
+            r * (self.wr - self.wl) / self.WHEEL_SEPARATION
+            * dt * self.w
+        )
+
+        # Limit angle range to [-pi, pi]
+        self.w = np.arctan2(np.sin(self.w), np.cos(self.w))
+
+        self.x = (
+            self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
+            / 2 * dt * math.cos(self.w)
+        )
+        self.y = (
+            self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
+            / 2 * dt * math.sin(self.w)
+        )
+
+        w_err = np.arctan2(y, x) - self.w
+        d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
+        if abs(w_err) >= THRESHOLD:
+            self.set_angular_vel(KW * w_err)
+        elif abs(d_err) >= THRESHOLD:
+            self.set_linear_vel(KV * d_err)
+            self.set_angular_vel(0.0)
+
+    def get_x(self):
+        return self.x
+
+    def get_y(self):
+        return self.y
+
+    def get_w(self):
+        return self.w
+
+    def pub_pos(self):
+        self.pos_pub.publish(
+            "(" + str(self.x) + ", " + str(self.y) + ") " + str(self.w)
+        )
 
     def pub_vel(self):
         self.vel_pub.publish(self.vel)
@@ -107,7 +178,19 @@ class Robot:
         self.vel.linear.x = 0.0
         self.vel.angular.z = 0.0
 
+        self.x = 0.0
+        self.y = 0.0
+
+        self.wl = None
+        self.wr = None
+
         self.pub_vel()
+
+    def _wl_callback(self, wl):
+        self.wl = wl.data
+
+    def _wr_callback(self, wr):
+        self.wr = wr.data
 
 
 class Main:

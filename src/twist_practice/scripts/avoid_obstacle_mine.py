@@ -111,23 +111,19 @@ class Robot:
         self.wl = None
         self.wr = None
 
-    def goto_point(self, x, y, w, dt):
+    def goto_point(self, x, y, dt):
         # Do nothing if nodes are not available
         if self.wl is None and self.wr is None:
             return
 
         # Control constants
-        KV = 0.0
+        KV = 0.3
         KW = 0.5
         THRESHOLD = 0.1
 
-        # Adjust goal coordinates based on origin
-        x = x - self.x
-        y = y - self.y
-
         self.w = (
             self.WHEEL_RADIUS * (self.wr - self.wl)
-            / self.WHEEL_SEPARATION * dt * self.w
+            / self.WHEEL_SEPARATION * dt + self.w
         )
 
         # Limit angle range to [-pi, pi]
@@ -144,6 +140,9 @@ class Robot:
 
         w_err = np.arctan2(y, x) - self.w
         d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
+        self.set_linear_vel(0.0)
+        self.set_angular_vel(0.0)
 
         if abs(w_err) >= THRESHOLD:
             self.set_angular_vel(KW * w_err)
@@ -216,7 +215,7 @@ class Main:
         rate = rospy.Rate(freq)
 
         while not rospy.is_shutdown():
-            self.robot.goto_point(1.0, 1.0, 0.0, 1.0 / freq)
+            self.robot.goto_point(1.0, 1.0, 1.0 / freq)
             # if self.lidar.available():
             #     if np.isinf(self.lidar.get_min_range()):
             #         self.robot.set_linear_vel(0.0)

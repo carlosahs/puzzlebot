@@ -139,7 +139,7 @@ class Main:
                 else:
                     self.control_speed()
 
-            self.lidar.pub_vel()
+            self.robot.pub_vel()
             rate.sleep()
 
     def control_speed(self):

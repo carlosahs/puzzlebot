@@ -111,6 +111,27 @@ class Robot:
         self.wl = None
         self.wr = None
 
+    def goto_point_controller(self, x, y, dt):
+        self.w = (
+            self.WHEEL_RADIUS * (self.wr - self.wl)
+            / self.WHEEL_SEPARATION * dt + self.w
+        )
+
+        # Limit angle range to [-pi, pi]
+        self.w = np.arctan2(np.sin(self.w), np.cos(self.w))
+
+        self.x = (
+            self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
+            / 2 * dt * np.cos(self.w)
+        )
+        self.y = (
+            self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
+            / 2 * dt * np.sin(self.w)
+        )
+
+        w_err = np.arctan2(y - self.y, x - self.x) - self.w
+        d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
     def goto_point(self, x, y, dt, clock):
         # Do nothing if nodes are not available
         if self.wl is None and self.wr is None:
@@ -124,26 +145,6 @@ class Robot:
         at_point = False
 
         while not at_point:
-            self.w = (
-                self.WHEEL_RADIUS * (self.wr - self.wl)
-                / self.WHEEL_SEPARATION * dt + self.w
-            )
-
-            # Limit angle range to [-pi, pi]
-            self.w = np.arctan2(np.sin(self.w), np.cos(self.w))
-
-            self.x = (
-                self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
-                / 2 * dt * np.cos(self.w)
-            )
-            self.y = (
-                self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
-                / 2 * dt * np.sin(self.w)
-            )
-
-            w_err = np.arctan2(y - self.y, x - self.x) - self.w
-            d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
-
             if abs(w_err) >= THRESHOLD:
                 self.set_linear_vel(0.0)
                 self.set_angular_vel(KW * w_err)
@@ -151,15 +152,15 @@ class Robot:
                 self.set_linear_vel(KV * d_err)
                 self.set_angular_vel(0.0)
             else:
-                self.set_linear_vel(0.0)
-                self.set_angular_vel(0.0)
-
                 at_point = True
-
-            print(str(w_err) + " " + str(d_err))
 
             self.pub_vel()
             clock.sleep()
+
+        self.set_linear_vel(0.0)
+        self.set_angular_vel(0.0)
+
+        self.pub_vel()
 
         print(str(self.x) + " " + str(self.y))
 
@@ -234,12 +235,14 @@ class Main:
             yt = float(input("y: "))
 
             self.robot.goto_point(xt, yt, 1.0 / freq, rate)
+
             # if self.lidar.available():
             #     if np.isinf(self.lidar.get_min_range()):
             #         self.robot.set_linear_vel(0.0)
             #         self.robot.set_angular_vel(0.0)
             #     else:
             #         self.control_speed()
+
             rate.sleep()
 
     def control_speed(self):

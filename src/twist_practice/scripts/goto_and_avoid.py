@@ -95,7 +95,7 @@ class Robot:
     WHEEL_RADIUS = 0.05  # Wheel radius (m)
     WHEEL_SEPARATION = 0.19  # Wheel separation (m)
 
-    def __init__(self):
+    def __init__(self, op_t):
         rospy.Subscriber("wl", Float32, self._wl_callback)
         rospy.Subscriber("wr", Float32, self._wr_callback)
 
@@ -108,20 +108,15 @@ class Robot:
         self.y = 0.0
         self.w = 0.0
 
+        self.op_t = op_t
+
         self.wl = None
         self.wr = None
 
-    def goto_point_controller(self, x, y, dt):
-        # Control constants
-        KV = 0.15  # 0.3
-        KW = 0.5
-        THRESHOLD = 0.1
-
-        at_point = False
-
+    def update_position(self):
         self.w = (
             self.WHEEL_RADIUS * (self.wr - self.wl)
-            / self.WHEEL_SEPARATION * dt + self.w
+            / self.WHEEL_SEPARATION * self.op_t + self.w
         )
 
         # Limit angle range to [-pi, pi]
@@ -129,12 +124,22 @@ class Robot:
 
         self.x = (
             self.x + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * np.cos(self.w)
+            / 2 * self.op_t * np.cos(self.w)
         )
         self.y = (
             self.y + self.WHEEL_RADIUS * (self.wr + self.wl)
-            / 2 * dt * np.sin(self.w)
+            / 2 * self.op_t * np.sin(self.w)
         )
+
+    def goto_point_controller(self, x, y):
+        # Control constants
+        KV = 0.15  # 0.3
+        KW = 0.5
+        THRESHOLD = 0.1
+
+        self.update_position()
+
+        at_point = False
 
         w_err = np.arctan2(y - self.y, x - self.x) - self.w
         d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
@@ -155,14 +160,14 @@ class Robot:
 
         return at_point
 
-    def goto_point(self, x, y, dt, clock):
+    def goto_point(self, x, y, clock):
         dx = x - self.x
         dy = y - self.y
 
         at_point = False
 
         while not at_point:
-            at_point = self.goto_point_controller(x, y, dt)
+            at_point = self.goto_point_controller(x, y)
 
             dx = x - self.x
             dy = y - self.y
@@ -219,8 +224,9 @@ class Main:
     GROWTH_RATE = 1.0  # Exponential growth rate
 
     def __init__(self):
+        self.freq = 10.0
         self.lidar = LiDAR()
-        self.robot = Robot()
+        self.robot = Robot(1.0 / self.freq)
 
         rospy.on_shutdown(self.cleanup)
 
@@ -232,8 +238,7 @@ class Main:
             self.min_range = np.inf
 
     def start(self):
-        freq = 10.0
-        rate = rospy.Rate(freq)
+        rate = rospy.Rate(self.freq)
 
         xt, yt = 0.0, 0.0
 
@@ -241,7 +246,7 @@ class Main:
             xt = float(input("x: "))
             yt = float(input("y: "))
 
-            self.robot.goto_point(xt, yt, 1.0 / freq, rate)
+            self.robot.goto_point(xt, yt, rate)
 
             # if self.lidar.available():
             #     if np.isinf(self.lidar.get_min_range()):

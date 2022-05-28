@@ -249,6 +249,7 @@ class Main:
                 xt = float(input("x: "))
                 yt = float(input("y: "))
 
+                at_point = False
                 retrieved_input = True
             elif self.lidar.available():
                 if np.isinf(self.lidar.get_min_range()):

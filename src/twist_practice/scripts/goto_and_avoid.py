@@ -241,16 +241,22 @@ class Main:
         rate = rospy.Rate(self.freq)
 
         xt, yt = 0.0, 0.0
+        at_point = False
+        retrieved_input = False
 
         while not rospy.is_shutdown():
-            xt = float(input("x: "))
-            yt = float(input("y: "))
+            if not retrieved_input:
+                xt = float(input("x: "))
+                yt = float(input("y: "))
 
-            if self.lidar.available():
+                retrieved_input = True
+            elif self.lidar.available():
                 if np.isinf(self.lidar.get_min_range()):
-                    self.robot.goto_point_controller(xt, yt)
+                    at_point = self.robot.goto_point_controller(xt, yt)
                 else:
                     self.control_speed()
+
+                retrieved_input = not at_point
 
             rate.sleep()
 

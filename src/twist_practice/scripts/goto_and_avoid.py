@@ -112,6 +112,13 @@ class Robot:
         self.wr = None
 
     def goto_point_controller(self, x, y, dt):
+        # Control constants
+        KV = 0.15  # 0.3
+        KW = 0.5
+        THRESHOLD = 0.1
+
+        at_point = False
+
         self.w = (
             self.WHEEL_RADIUS * (self.wr - self.wl)
             / self.WHEEL_SEPARATION * dt + self.w
@@ -132,35 +139,35 @@ class Robot:
         w_err = np.arctan2(y - self.y, x - self.x) - self.w
         d_err = np.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
-    def goto_point(self, x, y, dt, clock):
-        # Do nothing if nodes are not available
-        if self.wl is None and self.wr is None:
-            return
+        if abs(w_err) >= THRESHOLD:
+            self.set_linear_vel(0.0)
+            self.set_angular_vel(KW * w_err)
+        elif abs(d_err) >= THRESHOLD:
+            self.set_linear_vel(KV * d_err)
+            self.set_angular_vel(0.0)
+        else:
+            at_point = True
 
-        # Control constants
-        KV = 0.15  # 0.3
-        KW = 0.5
-        THRESHOLD = 0.1
+            self.set_linear_vel(0.0)
+            self.set_angular_vel(0.0)
+
+        self.pub_vel()
+
+        return at_point
+
+    def goto_point(self, x, y, dt, clock):
+        dx = x - self.x
+        dy = y - self.y
 
         at_point = False
 
         while not at_point:
-            if abs(w_err) >= THRESHOLD:
-                self.set_linear_vel(0.0)
-                self.set_angular_vel(KW * w_err)
-            elif abs(d_err) >= THRESHOLD:
-                self.set_linear_vel(KV * d_err)
-                self.set_angular_vel(0.0)
-            else:
-                at_point = True
+            at_point = self.goto_point_controller(x, y, dt)
 
-            self.pub_vel()
+            dx = x - self.x
+            dy = y - self.y
+
             clock.sleep()
-
-        self.set_linear_vel(0.0)
-        self.set_angular_vel(0.0)
-
-        self.pub_vel()
 
         print(str(self.x) + " " + str(self.y))
 

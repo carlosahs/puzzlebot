@@ -246,14 +246,11 @@ class Main:
             xt = float(input("x: "))
             yt = float(input("y: "))
 
-            self.robot.goto_point(xt, yt, rate)
-
-            # if self.lidar.available():
-            #     if np.isinf(self.lidar.get_min_range()):
-            #         self.robot.set_linear_vel(0.0)
-            #         self.robot.set_angular_vel(0.0)
-            #     else:
-            #         self.control_speed()
+            if self.lidar.available():
+                if np.isinf(self.lidar.get_min_range()):
+                    self.robot.goto_point_controller(xt, yt)
+                else:
+                    self.control_speed()
 
             rate.sleep()
 

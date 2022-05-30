@@ -254,6 +254,15 @@ class Main:
             elif self.lidar.available():
                 if np.isinf(self.lidar.get_min_range()):
                     at_point = self.robot.goto_point_controller(xt, yt)
+                elif (
+                    self.lidar.get_min_angle() - self.robot.get_w()
+                ) ** 2 <= 0.01:  # If the difference is less than 0.1 rad
+                    if self.distance_from_robot(xt, yt) <= self.lidar.get_min_range():
+                        self.control_speed()
+                        print(str(self.distance_from_robot(xt, yt)))
+                        print(str(self.lidar.get_min_range()))
+                    else:
+                        at_point = self.robot.goto_point_controller(xy, yt)
                 else:
                     self.control_speed()
 
@@ -261,12 +270,20 @@ class Main:
 
             rate.sleep()
 
+    def distance_from_robot(self, x, y):
+        return np.sqrt(
+            (x - self.robot.get_x()) ** 2
+            + (y - self.robot.get_y()) ** 2
+        )
+
     def control_speed(self):
         thetaT, dT = self.lidar.get_thetaT_dT()
 
         kv = self.KV_MAX * (
             1 - np.exp(-self.GROWTH_RATE * dT ** 2)
         ) / dT
+
+        self.robot.update_position()
         
         self.robot.set_linear_vel(kv * dT)
         self.robot.set_angular_vel(self.KW * thetaT)

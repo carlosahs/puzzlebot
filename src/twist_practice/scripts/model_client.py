@@ -1,14 +1,15 @@
 import socket
+import json
 import torch
 import cv2
 import numpy as np
 
 from PIL import Image
 
-SVR_ADD = 1247
+SVR_ADD = 1259
 SVR_QS = 5
 
-CLT_ADD = 1246
+CLT_ADD = 1258
 CLT_QS = 5
 
 BYTE_STREAM = 1024
@@ -21,7 +22,7 @@ s.listen(SVR_QS)
 
 model = torch.hub.load(
     'ultralytics/yolov5', 'custom',
-    path=MODELS + "/best_5s.pt", force_reload=True
+    path=MODELS + "/best_5s.pt"  #, force_reload=True
 )
 
 while True:
@@ -29,19 +30,21 @@ while True:
     c.connect((socket.gethostname(), CLT_ADD))
 
     buf = c.recv(BYTE_STREAM)
-    img = np.frombuffer(buf, dtype=np.uint8)
-    print(img, img.nbytes, img.dtype, img.shape)
-    img.reshape((480, 640, 3))
+    img_path = buf.decode("utf-8")
+
+    with open(img_path, "rb") as f:
+        img = np.load(f)
 
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     results = model(rgb)
-    # results_info = results.pandas()
+    print(results.pandas().xyxy[0])
 
-    pred = 0
+    data = results.pandas().xyxy[0].to_dict()
+    print(data)
 
     clientsocket, address = s.accept()
-    clientsocket.send(bytes(str(pred), "utf-8"))
+    clientsocket.send(json.dumps(data, indent=2).encode("utf-8"))
     clientsocket.close()
 
     # cv2.imshow('YOLO', np.squeeze(results.render())) 

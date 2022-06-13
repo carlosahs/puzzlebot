@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import ast
 import numpy as np
 import socket
 import cv2
@@ -10,13 +11,14 @@ from std_msgs.msg import Int32
 import time
 import os
 
-SVR_ADD = 1246
+SVR_ADD = 1258
 SVR_QS = 5
 
-CLT_ADD = 1247
+CLT_ADD = 1259
 CLT_QS = 5
 
-BYTE_STREAM = 1024
+BYTE_STREAM = 4096
+IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
@@ -46,25 +48,26 @@ class FollowLine:
         while not rospy.is_shutdown():
             ret, image = capture.read()
             # image = self.image_recieved
-            print(image, image.nbytes, image.dtype, image.shape)
 
             if image.any() > 0:
-            #     buf = image.tobytes()
-            #     arr = np.frombuffer(buf, dtype=np.uint8)
-            #
-            #     print(arr.nbytes)
+                with open(IMG_PATH, "wb") as f:
+                    np.save(f, image)
 
                 clientsocket, address = s.accept()
-                clientsocket.sendall(image.tobytes())
+                clientsocket.send(bytes(IMG_PATH.encode("utf-8")))
                 clientsocket.close()
 
                 c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 c.connect((socket.gethostname(), CLT_ADD))
 
-                pred = c.recv(BYTE_STREAM)
-                pred = int(pred.decode("utf-8"))
+                buf = c.recv(BYTE_STREAM)
+                data_dict = buf.decode("utf-8")
+                data = ast.literal_eval(data_dict)
+                print(type(data), data)
 
-                print(pred)
+                # if pred.empty():
+                #     pass # do nothing
+                # else:
             r.sleep()  
             
         image.release()

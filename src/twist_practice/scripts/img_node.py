@@ -13,10 +13,10 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 8002
+SVR_ADD = 9002
 SVR_QS = 5
 
-CLT_ADD = 8003
+CLT_ADD = 9003
 CLT_QS = 5
 
 BYTE_STREAM = 4096
@@ -25,7 +25,7 @@ IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 SIGNAL_THRESHOLD_HI = 40000
 SIGNAL_THRESHOLD_LO = 20000
 
-SEM_THRESHOLD = 5000
+SEM_THRESHOLD = 3500
 
 # def cmp_heapify(data, cmp):
 #     s = list(map(cmp_to_key(cmp), data))

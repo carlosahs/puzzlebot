@@ -13,14 +13,19 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 4002
+SVR_ADD = 6002
 SVR_QS = 5
 
-CLT_ADD = 4003
+CLT_ADD = 6003
 CLT_QS = 5
 
 BYTE_STREAM = 4096
 IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
+
+SIGNAL_THRESHOLD_HI = 40000
+SIGNAL_THRESHOLD_LO = 30000
+
+SEM_THRESHOLD = 6000
 
 # def cmp_heapify(data, cmp):
 #     s = list(map(cmp_to_key(cmp), data))
@@ -40,7 +45,7 @@ class ImageDetection:
             "video_source/raw", Image, self.image_callback
         )
         self.sem_pub = rospy.Publisher("/sem_color", Int32, queue_size=1)
-        self.signal_pub = rospu.Publisher("/signal_detected", Int32, queue_size=1)
+        self.signal_pub = rospy.Publisher("/signal_detected", Int32, queue_size=1)
 
         self.image_recieved = np.zeros((0,0))
         self.signal = 0
@@ -51,6 +56,8 @@ class ImageDetection:
         print("Node initialized at " + str(rate) + "Hz.")
         
         # model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODELS + "/best_5s.pt")
+
+        signals, semaphores = [], []
 
         while not rospy.is_shutdown():
             # ret, image = capture.read()
@@ -78,19 +85,21 @@ class ImageDetection:
 
                 if len(signals) > 0:
                     print(signals[0])
+
+                    if len(signals) > 0 and (
+                        -signals[0][0] <= SIGNAL_THRESHOLD_HI and -signals[0][0] >= SIGNAL_THRESHOLD_LO
+                    ):
+                        self.signal_pub.publish(signals[0][1])
+                else:
+                    self.signal_pub.publish(-1)
+
                 if len(semaphores) > 0:
                     print(semaphores[0])
 
-            signal_id = -1
-            sem_id = -1
-
-            if len(signals) > 0:
-                signal_id = signals[0][1]
-            if len(semaphores) > 0:
-                sem_id = semaphores[0][1]
-
-            self.signal_pub.publish(signal_id)  # Publish signal class
-            self.sem_pub.publish(sem_id) # Publish semaphore class
+                    if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
+                        self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class
+                else:
+                    self.sem_pub.publish(-1)
 
             r.sleep()  
             

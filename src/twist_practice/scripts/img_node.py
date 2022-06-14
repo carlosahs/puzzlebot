@@ -31,7 +31,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
 s.listen(SVR_QS)
 
-class FollowLine:
+class ImageDetection:
     def __init__(self):
         # capture = cv2.VideoCapture(0)
         rospy.on_shutdown(self._cleanup)
@@ -39,8 +39,8 @@ class FollowLine:
         self.image_sub = rospy.Subscriber(
             "video_source/raw", Image, self.image_callback
         )
-        self.cmd_vel_pub = rospy.Publisher("/signal_detected", Int32, queue_size=1)
-        self.image_pub = rospy.Publisher("/sem_color", Int32, queue_size=1)
+        self.sem_pub = rospy.Publisher("/sem_color", Int32, queue_size=1)
+        self.signal_pub = rospu.Publisher("/signal_detected", Int32, queue_size=1)
 
         self.image_recieved = np.zeros((0,0))
         self.signal = 0
@@ -72,11 +72,25 @@ class FollowLine:
                 data = ast.literal_eval(data_dict)
 
                 # print(data)
+                # 40k threshold
 
                 signals, semaphores = self._get_preds_pq(data)
 
                 if len(signals) > 0:
                     print(signals[0])
+                if len(semaphores) > 0:
+                    print(semaphores[0])
+
+            signal_id = -1
+            sem_id = -1
+
+            if len(signals) > 0:
+                signal_id = signals[0][1]
+            if len(semaphores) > 0:
+                sem_id = semaphores[0][1]
+
+            self.signal_pub.publish(signal_id)  # Publish signal class
+            self.sem_pub.publish(sem_id) # Publish semaphore class
 
             r.sleep()  
             
@@ -127,6 +141,6 @@ class FollowLine:
         pass
     
 if __name__ == "__main__":
-    rospy.init_node("follower", anonymous=True)
-    FollowLine()
+    rospy.init_node("detection", anonymous=True)
+    ImageDetection()
     rospy.spin()

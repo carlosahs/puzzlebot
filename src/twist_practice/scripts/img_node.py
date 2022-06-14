@@ -13,10 +13,10 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 7002
+SVR_ADD = 8002
 SVR_QS = 5
 
-CLT_ADD = 7003
+CLT_ADD = 8003
 CLT_QS = 5
 
 BYTE_STREAM = 4096
@@ -25,7 +25,7 @@ IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 SIGNAL_THRESHOLD_HI = 40000
 SIGNAL_THRESHOLD_LO = 20000
 
-SEM_THRESHOLD = 6000
+SEM_THRESHOLD = 5000
 
 # def cmp_heapify(data, cmp):
 #     s = list(map(cmp_to_key(cmp), data))
@@ -84,7 +84,7 @@ class ImageDetection:
                 signals, semaphores = self._get_preds_pq(data)
 
                 if len(signals) > 0:
-                    print(signals[0])
+                    # print(signals[0])
 
                     if len(signals) > 0 and (
                         -signals[0][0] <= SIGNAL_THRESHOLD_HI and -signals[0][0] >= SIGNAL_THRESHOLD_LO
@@ -94,7 +94,7 @@ class ImageDetection:
                     self.signal_pub.publish(-1)
 
                 if len(semaphores) > 0:
-                    print(semaphores[0])
+                    # print(semaphores[0])
 
                     if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
                         self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class

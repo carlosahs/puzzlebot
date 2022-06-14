@@ -107,8 +107,8 @@ class FollowLine:
             else:
                 signal_list.append((i, name, -area, confidence))
 
-        signal_list = cmp_heapify(signal_list, cmp=lambda v: v[2])
-        semaphore_list = cmp_heapify(semaphore_list, cmp=lambda v: v[2])
+        signal_list = cmp_heapify(signal_list, cmp=lambda a, b: a[2] - b[2])
+        semaphore_list = cmp_heapify(semaphore_list, cmp=lambda a, b: a[2] - b[2])
 
         return signal_list, semaphore_list
 

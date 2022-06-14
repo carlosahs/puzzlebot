@@ -25,7 +25,7 @@ s.listen(SVR_QS)
 
 model = torch.hub.load(
     YOLOV5_PATH, 'custom',
-    path=MODELS + "/best_5s.pt", source='local'
+    path=MODELS + "/last_5s.pt", source='local'
 )
 
 while True:

@@ -13,17 +13,17 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 6002
+SVR_ADD = 7002
 SVR_QS = 5
 
-CLT_ADD = 6003
+CLT_ADD = 7003
 CLT_QS = 5
 
 BYTE_STREAM = 4096
 IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 
 SIGNAL_THRESHOLD_HI = 40000
-SIGNAL_THRESHOLD_LO = 30000
+SIGNAL_THRESHOLD_LO = 20000
 
 SEM_THRESHOLD = 6000
 

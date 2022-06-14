@@ -40,7 +40,12 @@ while True:
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     results = model(rgb)
-    data = results.pandas().xyxy[0].to_dict()
+    data = results.pandas().xyxy[0]
+
+    data['area'] = data.apply(lambda row: abs(rows.xmin - rows.xmax) * abs(rows.ymin - rows.ymax), axis=1)
+    data.drop(columns=['xmax', 'xmin', 'ymax', 'ymin'])
+
+    data = data.to_dict()
 
     clientsocket, address = s.accept()
     clientsocket.send(json.dumps(data, indent=2).encode("utf-8"))

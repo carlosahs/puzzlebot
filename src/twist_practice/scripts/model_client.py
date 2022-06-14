@@ -8,10 +8,10 @@ import pandas as pd
 
 from PIL import Image
 
-SVR_ADD = 4003
+SVR_ADD = 6003
 SVR_QS = 5
 
-CLT_ADD = 4002
+CLT_ADD = 6002
 CLT_QS = 5
 
 BYTE_STREAM = 1024

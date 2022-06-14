@@ -9,24 +9,23 @@ import cv_bridge
 import time
 import os
 
-from functools import cmp_to_key
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 2008
+SVR_ADD = 4002
 SVR_QS = 5
 
-CLT_ADD = 2009
+CLT_ADD = 4003
 CLT_QS = 5
 
 BYTE_STREAM = 4096
 IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 
-def cmp_heapify(data, cmp):
-    s = list(map(cmp_to_key(cmp), data))
-    heapq.heapify(s)
-    return s
+# def cmp_heapify(data, cmp):
+#     s = list(map(cmp_to_key(cmp), data))
+#     heapq.heapify(s)
+#     return s
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
@@ -98,17 +97,23 @@ class FollowLine:
                 datum = data[key][str(i)]
                 signal_map[key] = datum
 
-            area = signal_map["area"]
+            xmin = signal_map["xmin"]
+            ymin= signal_map["ymin"]
+            xmax = signal_map["xmax"]
+            ymax = signal_map["ymax"]
             confidence = signal_map["confidence"]
             name = signal_map["name"]
+            name_id = signal_map["class"]
+            # area = signal_map["area"]
+            area = abs(xmin - xmax) * abs(ymin - ymax)
 
             if signal_map["name"].find("semaphore") >= 0:
-                semaphore_list.append((i, name, area, confidence))
+                semaphore_list.append((area, name_id, name, confidence))
             else:
-                signal_list.append((i, name, -area, confidence))
+                signal_list.append((-area, name_id, name, confidence))
 
-        signal_list = cmp_heapify(signal_list, cmp=lambda a, b: a[2] - b[2])
-        semaphore_list = cmp_heapify(semaphore_list, cmp=lambda a, b: a[2] - b[2])
+        heapq.heapify(signal_list)
+        heapq.heapify(semaphore_list)
 
         return signal_list, semaphore_list
 

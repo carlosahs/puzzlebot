@@ -3,6 +3,7 @@ import ast
 import numpy as np
 import socket
 import cv2
+import heapq
 import rospy
 import cv_bridge
 from geometry_msgs.msg import Twist
@@ -11,10 +12,10 @@ from std_msgs.msg import Int32
 import time
 import os
 
-SVR_ADD = 1258
+SVR_ADD = 2006
 SVR_QS = 5
 
-CLT_ADD = 1259
+CLT_ADD = 2007
 CLT_QS = 5
 
 BYTE_STREAM = 4096
@@ -26,7 +27,7 @@ s.listen(SVR_QS)
 
 class FollowLine:
     def __init__(self):
-        capture = cv2.VideoCapture(0)
+        # capture = cv2.VideoCapture(0)
         rospy.on_shutdown(self._cleanup)
         self.bridge = cv_bridge.CvBridge()
         self.image_sub = rospy.Subscriber(
@@ -46,8 +47,8 @@ class FollowLine:
         # model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODELS + "/best_5s.pt")
 
         while not rospy.is_shutdown():
-            ret, image = capture.read()
-            # image = self.image_recieved
+            # ret, image = capture.read()
+            image = self.image_recieved
 
             if image.any() > 0:
                 with open(IMG_PATH, "wb") as f:
@@ -63,15 +64,49 @@ class FollowLine:
                 buf = c.recv(BYTE_STREAM)
                 data_dict = buf.decode("utf-8")
                 data = ast.literal_eval(data_dict)
-                print(type(data), data)
 
-                # if pred.empty():
-                #     pass # do nothing
-                # else:
+                print(data)
+
+                signals, semaphores = self._get_preds_pq(data)
+                signals.sort(key=lambda v: v[2]) # n lg n
+
+                if len(signals) > 0:
+                    print(signals[-1])
+
             r.sleep()  
             
         image.release()
 
+    def _get_preds_pq(self, data):
+        num_signals = len(data["xmin"])
+        signal_list = []
+        semaphore_list = []
+
+        for i in range(num_signals):
+            signal_map = {}
+
+            for key in data.keys():
+                datum = data[key][str(i)]
+                signal_map[key] = datum
+
+            xmin = signal_map["xmin"]
+            xmax = signal_map["xmax"]
+            ymin = signal_map["ymin"]
+            ymax = signal_map["ymax"]
+            confidence = signal_map["confidence"]
+            name = signal_map["name"]
+
+            x_len = abs(xmin - xmax)
+            y_len = abs(ymin - ymax)
+
+            area = x_len * y_len
+
+            if signal_map["name"].find("semaphore") >= 0:
+                semaphore_list.append((i, name, area, confidence))
+            else:
+                signal_list.append((i, name, area, confidence))
+
+        return signal_list, semaphore_list
 
     def image_callback(self, msg):
         try:

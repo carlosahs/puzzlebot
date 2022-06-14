@@ -104,7 +104,7 @@ class FollowLine:
             area = x_len * y_len
 
             if signal_map["name"].find("semaphore") >= 0:
-                semaphore_list.append((i, name, -area, confidence))
+                semaphore_list.append((i, name, area, confidence))
             else:
                 signal_list.append((i, name, -area, confidence))
 

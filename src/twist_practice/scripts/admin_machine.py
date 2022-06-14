@@ -21,7 +21,7 @@ class Admin_machine:
         self.preds_sub = rospy.Susbcriber
 
         # Publishers
-        self.cmd_vel_pub = rospy.Publisher("/vel_p", Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
         # Variable twist para controlar la velocidad del robot
         self.twist = Twist()

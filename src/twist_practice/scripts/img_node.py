@@ -6,11 +6,13 @@ import cv2
 import heapq
 import rospy
 import cv_bridge
+import time
+import os
+
+from functools import cmp_to_key
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
-import time
-import os
 
 SVR_ADD = 2008
 SVR_QS = 5
@@ -20,6 +22,11 @@ CLT_QS = 5
 
 BYTE_STREAM = 4096
 IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
+
+def cmp_heapify(data, cmp):
+    s = list(map(cmp_to_key(cmp), data))
+    heapq.heapify(s)
+    return s
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
@@ -91,25 +98,17 @@ class FollowLine:
                 datum = data[key][str(i)]
                 signal_map[key] = datum
 
-            xmin = signal_map["xmin"]
-            xmax = signal_map["xmax"]
-            ymin = signal_map["ymin"]
-            ymax = signal_map["ymax"]
+            area = signal_map["area"]
             confidence = signal_map["confidence"]
             name = signal_map["name"]
-
-            x_len = abs(xmin - xmax)
-            y_len = abs(ymin - ymax)
-
-            area = x_len * y_len
 
             if signal_map["name"].find("semaphore") >= 0:
                 semaphore_list.append((i, name, area, confidence))
             else:
                 signal_list.append((i, name, -area, confidence))
 
-        heapq.heapify(signal_list)
-        heapq.heapify(semaphore_list)
+        signal_list = cmp_heapify(signal_list, cmp=lambda v: v[2])
+        semaphore_list = cmp_heapify(semaphore_list, cmp=lambda v: v[2])
 
         return signal_list, semaphore_list
 

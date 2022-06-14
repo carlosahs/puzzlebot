@@ -12,10 +12,10 @@ from std_msgs.msg import Int32
 import time
 import os
 
-SVR_ADD = 2006
+SVR_ADD = 2008
 SVR_QS = 5
 
-CLT_ADD = 2007
+CLT_ADD = 2009
 CLT_QS = 5
 
 BYTE_STREAM = 4096
@@ -65,13 +65,12 @@ class FollowLine:
                 data_dict = buf.decode("utf-8")
                 data = ast.literal_eval(data_dict)
 
-                print(data)
+                # print(data)
 
                 signals, semaphores = self._get_preds_pq(data)
-                signals.sort(key=lambda v: v[2]) # n lg n
 
                 if len(signals) > 0:
-                    print(signals[-1])
+                    print(signals[0])
 
             r.sleep()  
             
@@ -81,6 +80,9 @@ class FollowLine:
         num_signals = len(data["xmin"])
         signal_list = []
         semaphore_list = []
+
+        # for key, val in data.items():
+        #     pass
 
         for i in range(num_signals):
             signal_map = {}
@@ -102,9 +104,12 @@ class FollowLine:
             area = x_len * y_len
 
             if signal_map["name"].find("semaphore") >= 0:
-                semaphore_list.append((i, name, area, confidence))
+                semaphore_list.append((i, name, -area, confidence))
             else:
-                signal_list.append((i, name, area, confidence))
+                signal_list.append((i, name, -area, confidence))
+
+        heapq.heapify(signal_list)
+        heapq.heapify(semaphore_list)
 
         return signal_list, semaphore_list
 

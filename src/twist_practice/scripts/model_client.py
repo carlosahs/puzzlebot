@@ -7,10 +7,10 @@ import numpy as np
 
 from PIL import Image
 
-SVR_ADD = 2007
+SVR_ADD = 2009
 SVR_QS = 5
 
-CLT_ADD = 2006
+CLT_ADD = 2008
 CLT_QS = 5
 
 BYTE_STREAM = 1024

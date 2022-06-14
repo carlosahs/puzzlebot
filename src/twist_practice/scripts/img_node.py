@@ -83,7 +83,7 @@ class FollowLine:
         image.release()
 
     def _get_preds_pq(self, data):
-        num_signals = len(data["xmin"])
+        num_signals = len(data["class"])
         signal_list = []
         semaphore_list = []
 
@@ -97,15 +97,15 @@ class FollowLine:
                 datum = data[key][str(i)]
                 signal_map[key] = datum
 
-            xmin = signal_map["xmin"]
-            ymin= signal_map["ymin"]
-            xmax = signal_map["xmax"]
-            ymax = signal_map["ymax"]
+            # xmin = signal_map["xmin"]
+            # ymin= signal_map["ymin"]
+            # xmax = signal_map["xmax"]
+            # ymax = signal_map["ymax"]
             confidence = signal_map["confidence"]
             name = signal_map["name"]
             name_id = signal_map["class"]
-            # area = signal_map["area"]
-            area = abs(xmin - xmax) * abs(ymin - ymax)
+            area = signal_map["area"]
+            # area = abs(xmin - xmax) * abs(ymin - ymax)
 
             if signal_map["name"].find("semaphore") >= 0:
                 semaphore_list.append((area, name_id, name, confidence))

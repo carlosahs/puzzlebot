@@ -4,13 +4,14 @@ import torch
 import cv2
 import ssl
 import numpy as np
+import pandas as pd
 
 from PIL import Image
 
-SVR_ADD = 2009
+SVR_ADD = 4003
 SVR_QS = 5
 
-CLT_ADD = 2008
+CLT_ADD = 4002
 CLT_QS = 5
 
 BYTE_STREAM = 1024
@@ -38,11 +39,10 @@ while True:
         img = np.load(f)
 
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
     results = model(rgb)
-    data = results.pandas().xyxy[0]
 
-    data['area'] = data.apply(lambda row: abs(rows.xmin - rows.xmax) * abs(rows.ymin - rows.ymax), axis=1)
+    data = results.pandas().xyxy[0]
+    data['area'] = abs(data['xmin'] - data['xmax']) * abs(data['ymin'] - data['ymax'])
     data.drop(columns=['xmax', 'xmin', 'ymax', 'ymin'])
 
     data = data.to_dict()

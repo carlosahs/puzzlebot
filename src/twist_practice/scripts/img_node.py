@@ -13,32 +13,24 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Int32
 
-SVR_ADD = 9002
-SVR_QS = 5
-
-CLT_ADD = 9003
-CLT_QS = 5
-
 BYTE_STREAM = 4096
 IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 
-SIGNAL_THRESHOLD_HI = 40000
-SIGNAL_THRESHOLD_LO = 20000
+SIGNAL_THRESHOLD_HI = 6500
+SIGNAL_THRESHOLD_LO = 5000
 
-SEM_THRESHOLD = 3500
+SEM_THRESHOLD = 1000
 
 # def cmp_heapify(data, cmp):
 #     s = list(map(cmp_to_key(cmp), data))
 #     heapq.heapify(s)
 #     return s
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((socket.gethostname(), SVR_ADD))
-s.listen(SVR_QS)
+SVR_ADD = 1234
 
 class ImageDetection:
     def __init__(self):
-        # capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture(0)
         rospy.on_shutdown(self._cleanup)
         self.bridge = cv_bridge.CvBridge()
         # self.image_sub = rospy.Subscriber(
@@ -63,8 +55,8 @@ class ImageDetection:
         signals, semaphores = [], []
 
         while not rospy.is_shutdown():
-            # ret, image = capture.read()
-            image = self.image_recieved
+            ret, image = capture.read()
+            # image = self.image_recieved
 
             if image.any() > 0:
                 # print(image.shape)
@@ -72,38 +64,37 @@ class ImageDetection:
                 with open(IMG_PATH, "wb") as f:
                     np.save(f, image)
 
-                clientsocket, address = s.accept()
-                clientsocket.send(bytes(IMG_PATH.encode("utf-8")))
-                clientsocket.close()
+                try:
+                    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    c.bind((socket.gethostname(), SVR_ADD))
 
-                c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                c.connect((socket.gethostname(), CLT_ADD))
+                    buf = c.recv(BYTE_STREAM)
+                    data_dict = buf.decode("utf-8")
+                    data = ast.literal_eval(data_dict)
 
-                buf = c.recv(BYTE_STREAM)
-                data_dict = buf.decode("utf-8")
-                data = ast.literal_eval(data_dict)
+                    signals, semaphores = self._get_preds_pq(data)
+                    print(signals)
+                    print(semaphores)
 
-                # 40k threshold
+                    if len(signals) > 0:
+                        if len(signals) > 0 and -signals[0][0] >= SIGNAL_THRESHOLD_LO:
+                            self.signal_pub.publish(signals[0][1])
+                        else:
+                            self.signal_pub.publish(-1)
+                    else:
+                        self.signal_pub.publish(-1)
 
-                signals, semaphores = self._get_preds_pq(data)
+                    if len(semaphores) > 0:
+                        print(semaphores[0])
 
-                if len(signals) > 0:
-                    print(data)
-                    # print(signals[0])
-
-                    if len(signals) > 0 and (
-                        -signals[0][0] <= SIGNAL_THRESHOLD_HI and -signals[0][0] >= SIGNAL_THRESHOLD_LO
-                    ):
-                        self.signal_pub.publish(signals[0][1])
-                else:
+                        if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
+                            self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class
+                        else:
+                            self.sem_pub.publish(-1)
+                    else:
+                        self.sem_pub.publish(-1)
+                except ConnectionRefusedError:
                     self.signal_pub.publish(-1)
-
-                if len(semaphores) > 0:
-                    # print(semaphores[0])
-
-                    if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
-                        self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class
-                else:
                     self.sem_pub.publish(-1)
 
             r.sleep()  

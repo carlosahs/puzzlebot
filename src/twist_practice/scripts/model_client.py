@@ -8,35 +8,38 @@ import pandas as pd
 
 from PIL import Image
 
-SVR_ADD = 6003
-SVR_QS = 5
-
-CLT_ADD = 6002
-CLT_QS = 5
-
 BYTE_STREAM = 1024
+IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
 
 MODELS = "/home/carlosahs42/Documents/models"
 YOLOV5_PATH = "/home/carlosahs42/Documents/te3002b/yolov5"
+
+model = torch.hub.load(
+    YOLOV5_PATH, 'custom',
+    path=MODELS + "/best.pt", source='local'
+)
+
+# model = torch.hub.load(
+#     "ultralytics/yolov5", 'custom',
+#     path=MODELS + "/best.pt", force_reload=True
+# )
+
+SVR_ADD = 1234
+SVR_QS = 5
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
 s.listen(SVR_QS)
 
-model = torch.hub.load(
-    YOLOV5_PATH, 'custom',
-    path=MODELS + "/last_5s.pt", source='local'
-)
-
 while True:
-    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c.connect((socket.gethostname(), CLT_ADD))
-
-    buf = c.recv(BYTE_STREAM)
-    img_path = buf.decode("utf-8")
-
-    with open(img_path, "rb") as f:
-        img = np.load(f)
+    img_read = False
+    while not img_read:
+        with open(img_path, "rb") as f:
+            try:
+                img = np.load(f)
+                img_read = True
+            except ValueError:
+                img_read = False
 
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = model(rgb)

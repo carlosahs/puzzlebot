@@ -26,7 +26,12 @@ SEM_THRESHOLD = 1000
 #     heapq.heapify(s)
 #     return s
 
-SVR_ADD = 1234
+SVR_ADD = 1251
+# SVR_QS = 5
+#
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# s.bind((socket.gethostname(), SVR_ADD + 1))
+# s.listen(SVR_QS)
 
 class ImageDetection:
     def __init__(self):
@@ -64,39 +69,42 @@ class ImageDetection:
                 with open(IMG_PATH, "wb") as f:
                     np.save(f, image)
 
-                try:
-                    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c.bind((socket.gethostname(), SVR_ADD))
+                # try:
+                c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                c.connect((socket.gethostname(), SVR_ADD))
 
-                    buf = c.recv(BYTE_STREAM)
-                    data_dict = buf.decode("utf-8")
-                    data = ast.literal_eval(data_dict)
+                buf = c.recv(BYTE_STREAM)
+                data_dict = buf.decode("utf-8")
+                data = ast.literal_eval(data_dict)
 
-                    signals, semaphores = self._get_preds_pq(data)
-                    print(signals)
-                    print(semaphores)
+                print(data)
 
-                    if len(signals) > 0:
-                        if len(signals) > 0 and -signals[0][0] >= SIGNAL_THRESHOLD_LO:
-                            self.signal_pub.publish(signals[0][1])
-                        else:
-                            self.signal_pub.publish(-1)
+                signals, semaphores = self._get_preds_pq(data)
+                print(signals)
+                print(semaphores)
+
+                if len(signals) > 0:
+                    if len(signals) > 0 and -signals[0][0] >= SIGNAL_THRESHOLD_LO:
+                        self.signal_pub.publish(signals[0][1])
                     else:
                         self.signal_pub.publish(-1)
+                else:
+                    self.signal_pub.publish(-1)
 
-                    if len(semaphores) > 0:
-                        print(semaphores[0])
+                if len(semaphores) > 0:
+                    print(semaphores[0])
 
-                        if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
-                            self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class
-                        else:
-                            self.sem_pub.publish(-1)
+                    if len(semaphores) > 0 and semaphores[0][0] >= SEM_THRESHOLD:
+                        self.sem_pub.publish(semaphores[0][1]) # Publish semaphore class
                     else:
                         self.sem_pub.publish(-1)
-                except ConnectionRefusedError:
-                    self.signal_pub.publish(-1)
+                else:
                     self.sem_pub.publish(-1)
-
+                # except Exception:
+                #     print("Fuck")
+                #     self.signal_pub.publish(-1)
+                #     self.sem_pub.publish(-1)
+                #
             r.sleep()  
             
         image.release()

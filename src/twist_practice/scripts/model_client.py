@@ -24,22 +24,27 @@ model = torch.hub.load(
 #     path=MODELS + "/best.pt", force_reload=True
 # )
 
-SVR_ADD = 1234
+SVR_ADD = 1251
 SVR_QS = 5
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((socket.gethostname(), SVR_ADD))
 s.listen(SVR_QS)
 
+IMG_PATH = "/home/carlosahs42/Documents/imgbin.npy"
+
 while True:
     img_read = False
     while not img_read:
-        with open(img_path, "rb") as f:
-            try:
-                img = np.load(f)
-                img_read = True
-            except ValueError:
-                img_read = False
+        try:
+            with open(IMG_PATH, "rb") as f:
+                try:
+                    img = np.load(f)
+                    img_read = True
+                except ValueError:
+                    img_read = False
+        except FileNotFoundError:
+            pass
 
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = model(rgb)
@@ -49,6 +54,8 @@ while True:
     data.drop(columns=['xmax', 'xmin', 'ymax', 'ymin'])
 
     data = data.to_dict()
+
+    print(data)
 
     clientsocket, address = s.accept()
     clientsocket.send(json.dumps(data, indent=2).encode("utf-8"))

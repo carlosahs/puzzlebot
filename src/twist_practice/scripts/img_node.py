@@ -41,8 +41,11 @@ class ImageDetection:
         # capture = cv2.VideoCapture(0)
         rospy.on_shutdown(self._cleanup)
         self.bridge = cv_bridge.CvBridge()
+        # self.image_sub = rospy.Subscriber(
+        #     "video_source/raw", Image, self.image_callback
+        # )
         self.image_sub = rospy.Subscriber(
-            "video_source/raw", Image, self.image_callback
+            "/video_low_res", Image, self.image_callback
         )
         self.sem_pub = rospy.Publisher("/sem_color", Int32, queue_size=1)
         self.signal_pub = rospy.Publisher("/signal_detected", Int32, queue_size=1)
@@ -64,6 +67,8 @@ class ImageDetection:
             image = self.image_recieved
 
             if image.any() > 0:
+                # print(image.shape)
+                # image = cv2.resize(image, dsize=(640, 360), interpolation=cv2.INTER_CUBIC)
                 with open(IMG_PATH, "wb") as f:
                     np.save(f, image)
 
@@ -78,12 +83,12 @@ class ImageDetection:
                 data_dict = buf.decode("utf-8")
                 data = ast.literal_eval(data_dict)
 
-                # print(data)
                 # 40k threshold
 
                 signals, semaphores = self._get_preds_pq(data)
 
                 if len(signals) > 0:
+                    print(data)
                     # print(signals[0])
 
                     if len(signals) > 0 and (
